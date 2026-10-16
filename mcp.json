@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "playwright": { "type": "http", "url": "http://localhost:8931/mcp" },
+    "card": { "type": "stdio", "command": "node", "args": ["card-mcp.mjs"], "env": { "CARD_CAP": "150", "CARD_DAILY_CAP": "300" } },
+    "memory": { "type": "stdio", "command": "node", "args": ["memory-mcp.mjs"] }
+  }
+}

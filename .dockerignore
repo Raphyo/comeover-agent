@@ -1,0 +1,16 @@
+node_modules
+auth
+auth-personal
+chrome-profile
+payments
+*.log
+*.enc
+*.json.bak*
+memory.json
+sessions.json
+groups.json
+qr.png
+pair.txt
+test-*.mjs
+*test.html
+.claude
