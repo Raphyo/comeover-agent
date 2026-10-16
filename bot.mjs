@@ -6,8 +6,18 @@
 //   ALLOW=all       1:1 chats it answers besides the owner: "all", or comma-separated numbers
 //   GROUPS=all      groups it may speak in: "all", or comma-separated fragments of group names ("friday crew,family")
 import path from "node:path";
-import { readFileSync } from "node:fs";
+import { readFileSync, appendFileSync, statSync, renameSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
+// On a server, keep a copy of the console in DATA_DIR/bot.log (Maritime's log view does not show the container's stdout).
+if (process.env.DATA_DIR) {
+  const logFile = path.join(process.env.DATA_DIR, "bot.log");
+  try { if (statSync(logFile).size > 5e6) renameSync(logFile, logFile + ".1"); } catch {}
+  for (const k of ["log", "error", "warn"]) {
+    const orig = console[k].bind(console);
+    console[k] = (...a) => { orig(...a); try { appendFileSync(logFile, new Date().toISOString().slice(0, 19) + " " + a.map(x => typeof x === "string" ? x : JSON.stringify(x)).join(" ") + "\n"); } catch {} };
+  }
+}
 import { createWhatsApp } from "./wa/baileys.mjs";
 import { createBrain, startBrowser } from "./brain.mjs";
 import { startVaultWeb } from "./vault-web.mjs";
@@ -102,7 +112,9 @@ async function enqueue(chatId, text, opts = {}) {
   q.busy = true;
   try {
     while (q.pending.length) {
-      const input = q.pending.splice(0).join("\n");
+      // The server's clock may be in another zone than the people; the agent gets the local date and time every turn.
+      const now = new Date().toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
+      const input = `(now: ${now})\n` + q.pending.splice(0).join("\n");
       wa.typing(chatId, true);
       const keepTyping = setInterval(() => wa.typing(chatId, true), 8000);
       let chain = Promise.resolve(); // sends stay in order even though the agent streams
