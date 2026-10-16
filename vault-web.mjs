@@ -214,8 +214,9 @@ export async function startVaultWeb({ port = 8787, onSaved = () => {}, onIssued 
     const m = url.pathname.match(/^\/v\/([A-Za-z0-9_-]{20,})$/);
     try {
       if (req.method === "GET" && url.pathname === "/health") return send(res, 200, { ok: true, baseUrl });
-      if (req.method === "GET" && url.pathname === "/") return send(res, 200, { ok: true, status: status() });
-      if (req.method === "POST" && url.pathname === "/chat") { await readJson(req).catch(() => ({})); return send(res, 200, { response: status() }); }
+      if (req.method === "GET" && url.pathname === "/") return send(res, 200, { ok: true, status: await status("") });
+      // Maritime's chat box: the message reaches status(), which can act on it (a new pairing code, for instance).
+      if (req.method === "POST" && url.pathname === "/chat") { const body = await readJson(req).catch(() => ({})); return send(res, 200, { response: await status(String(body?.message || body?.text || "")) }); }
       if (req.method === "POST" && url.pathname === "/issue") {
         if (!local(req)) return send(res, 403, { error: "local only" });
         const spec = normalize(await readJson(req));

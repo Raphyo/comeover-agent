@@ -139,8 +139,13 @@ const VAULT_PORT = String(process.env.PORT || process.env.VAULT_PORT || 8787);
 process.env.VAULT_PORT = VAULT_PORT; // the card tool server, a child of each agent run, posts its link requests to this port
 const vault = await startVaultWeb({
   port: +VAULT_PORT,
-  status: () => {
-    try { const pair = readFileSync(path.join(DATA, "pair.txt"), "utf8").trim(); if (pair) return `Not linked to WhatsApp yet. Pairing code: ${pair} (WhatsApp > Linked devices > Link with phone number instead)`; } catch {}
+  // Answers the public status page and Maritime's chat box. "new code" there gets a fresh pairing code while unlinked.
+  status: async (message = "") => {
+    let pair = ""; try { pair = readFileSync(path.join(DATA, "pair.txt"), "utf8").trim(); } catch {}
+    if (pair && /\b(new|fresh|another|pair|code|link)\b/i.test(message)) {
+      try { pair = (await wa.requestCode()) || pair; } catch (e) { return `Could not get a new code right now (${e?.message || e}). Try again in a few seconds.`; }
+    }
+    if (pair) return `Not linked to WhatsApp yet. Pairing code: ${pair} (WhatsApp > Linked devices > Link a device > Link with phone number instead). Write "new code" here if it has expired.`;
     return waStatus;
   },
   async onIssued(spec, url) {

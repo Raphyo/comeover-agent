@@ -29,13 +29,26 @@ export function createWhatsApp({ onMessage, onReady = () => {}, onAdded = () => 
   const pairFile = path.join(dir, "pair.txt");
   const sent = new Set();   // ids of our own messages, so the echo never comes back as input
   const names = new Map();  // number -> display name, learned from the messages people send
-  let sock = null, stopped = false;
+  let sock = null, stopped = false, creds = null;
   let pairingAsked = false; // one pairing code per run: asking again cancels the code the person is typing
 
   const me = () => [num(sock?.user?.id), num(sock?.user?.lid)].filter(Boolean);
 
+  // A fresh pairing code on request (the first one goes stale when nobody is around to type it).
+  async function requestCode() {
+    if (!PHONE) throw new Error("no PHONE configured");
+    if (creds?.registered) return null; // already linked
+    const code = await sock.requestPairingCode(PHONE);
+    const pretty = String(code).replace(/[^A-Z0-9]/gi, "").replace(/(.{4})(?=.)/g, "$1-");
+    writeFileSync(pairFile, pretty);
+    pairingAsked = true;
+    console.log(`\n======================\n  Pairing code: ${pretty}\n======================\nWhatsApp > Settings > Linked devices > Link a device > Link with phone number instead\n`);
+    return pretty;
+  }
+
   async function connect() {
     const { state, saveCreds } = await useMultiFileAuthState(path.join(dir, "auth"));
+    creds = state.creds;
     const { version } = await fetchLatestBaileysVersion();
     // With a pairing code the person needs time to type it, so the link window is longer and must not reset mid-way.
     sock = makeWASocket({ version, auth: state, logger: pino({ level: "silent" }), browser: Browsers.macOS("Chrome"), markOnlineOnConnect: false, qrTimeout: PHONE ? 180000 : 60000 });
@@ -128,6 +141,7 @@ export function createWhatsApp({ onMessage, onReady = () => {}, onAdded = () => 
   const groupCache = new Map();
   return {
     start: connect,
+    requestCode,
     stop() { stopped = true; try { sock?.end?.(); } catch {} },
     async send(chatId, text, { quote } = {}) {
       const r = await sock.sendMessage(chatId, { text }, quote ? { quoted: quote } : {});
