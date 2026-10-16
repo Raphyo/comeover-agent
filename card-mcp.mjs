@@ -16,8 +16,8 @@ import { z } from "zod";
 import { readCard, mask, getSecret, listSecrets, getLogin, listLogins, setLogin, totp } from "./vault.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const CDP = process.env.CDP_ENDPOINT || "http://localhost:9222";
-const VAULT = `http://localhost:${process.env.VAULT_PORT || 8787}`;
+const CDP = process.env.CDP_ENDPOINT || "http://127.0.0.1:9222";
+const VAULT = `http://127.0.0.1:${process.env.VAULT_PORT || 8787}`;
 const CAP = Number(process.env.CARD_CAP || 150);
 const DAILY = Number(process.env.CARD_DAILY_CAP || 300);
 const DATA = process.env.DATA_DIR || HERE;

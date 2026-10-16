@@ -48,7 +48,7 @@ function findChromium() {
 export async function startBrowser(dir, port = "8931", cdpPort = "9222") {
   // A browser from a previous run may still be up on the debugging port; attach to it rather than start a second one.
   let chrome = null;
-  const alive = await fetch(`http://localhost:${cdpPort}/json/version`, { signal: AbortSignal.timeout(1000) }).then(r => r.ok).catch(() => false);
+  const alive = await fetch(`http://127.0.0.1:${cdpPort}/json/version`, { signal: AbortSignal.timeout(1000) }).then(r => r.ok).catch(() => false);
   if (alive) console.log("[browser] reusing the browser already running on port " + cdpPort);
   else {
     chrome = spawn(process.env.BROWSER_EXE || findChromium(), [
@@ -58,7 +58,7 @@ export async function startBrowser(dir, port = "8931", cdpPort = "9222") {
     chrome.on("exit", code => console.log("[browser] chrome exited", code));
   }
   const bin = path.join(dir, "node_modules", ".bin", "playwright-mcp");
-  const mcp = spawn(bin, ["--port", String(port), "--cdp-endpoint", `http://localhost:${cdpPort}`], { stdio: ["ignore", "inherit", "inherit"] });
+  const mcp = spawn(bin, ["--port", String(port), "--cdp-endpoint", `http://127.0.0.1:${cdpPort}`], { stdio: ["ignore", "inherit", "inherit"] });
   mcp.on("exit", code => console.log("[browser] playwright-mcp exited", code));
   return { kill() { mcp.kill(); if (chrome) { chrome.kill(); setTimeout(() => chrome.kill("SIGKILL"), 1500).unref(); } } };
 }

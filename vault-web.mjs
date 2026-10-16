@@ -29,7 +29,7 @@ function openTunnel(port) {
     if (process.env.NO_TUNNEL) return resolve(null);
     let bin;
     try { bin = (await import("cloudflared")).bin; } catch { return resolve(null); }
-    const p = spawn(bin, ["tunnel", "--url", `http://localhost:${port}`, "--no-autoupdate"], { stdio: ["ignore", "pipe", "pipe"] });
+    const p = spawn(bin, ["tunnel", "--url", `http://127.0.0.1:${port}`, "--no-autoupdate"], { stdio: ["ignore", "pipe", "pipe"] });
     const timer = setTimeout(() => resolve(null), 25000);
     const look = d => { const m = String(d).match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/); if (m) { clearTimeout(timer); resolve(m[0]); } };
     p.stdout.on("data", look); p.stderr.on("data", look);

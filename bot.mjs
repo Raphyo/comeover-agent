@@ -123,8 +123,10 @@ async function enqueue(chatId, text, opts = {}) {
 // The web vault: the agent asks for a card or an ID through a one-time link, the person types it on their phone, and the
 // agent hears back here. Links go to the person in a private chat when their number is known, so nothing lands in a group.
 // Maritime injects PORT and expects /health and /chat there; the vault pages share that server.
+const VAULT_PORT = String(process.env.PORT || process.env.VAULT_PORT || 8787);
+process.env.VAULT_PORT = VAULT_PORT; // the card tool server, a child of each agent run, posts its link requests to this port
 const vault = await startVaultWeb({
-  port: process.env.PORT || process.env.VAULT_PORT || 8787,
+  port: +VAULT_PORT,
   status: () => {
     try { const pair = readFileSync(path.join(DATA, "pair.txt"), "utf8").trim(); if (pair) return `Not linked to WhatsApp yet. Pairing code: ${pair} (WhatsApp > Linked devices > Link with phone number instead)`; } catch {}
     return waStatus;
