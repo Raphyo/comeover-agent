@@ -6,5 +6,7 @@ if [ -z "$DISPLAY" ]; then
   export DISPLAY=:99
 fi
 export BROWSER_EXE="$(find /opt/ms-playwright -type f -name chrome -path '*chrome-linux*' | head -1)"
+# The Maritime VM ships an empty /etc/hosts, so nothing can resolve "localhost" without this line.
+grep -q localhost /etc/hosts 2>/dev/null || echo "127.0.0.1 localhost" >> /etc/hosts 2>/dev/null || true
 mkdir -p /data
 exec node bot.mjs

@@ -58,7 +58,8 @@ export async function startBrowser(dir, port = "8931", cdpPort = "9222") {
     chrome.on("exit", code => console.log("[browser] chrome exited", code));
   }
   const bin = path.join(dir, "node_modules", ".bin", "playwright-mcp");
-  const mcp = spawn(bin, ["--port", String(port), "--cdp-endpoint", `http://127.0.0.1:${cdpPort}`], { stdio: ["ignore", "inherit", "inherit"] });
+  // Bound to 127.0.0.1 by address: the server VM cannot resolve the name "localhost", which is the tool's default host.
+  const mcp = spawn(bin, ["--port", String(port), "--host", "127.0.0.1", "--cdp-endpoint", `http://127.0.0.1:${cdpPort}`], { stdio: ["ignore", "inherit", "inherit"] });
   mcp.on("exit", code => console.log("[browser] playwright-mcp exited", code));
   return { kill() { mcp.kill(); if (chrome) { chrome.kill(); setTimeout(() => chrome.kill("SIGKILL"), 1500).unref(); } } };
 }
